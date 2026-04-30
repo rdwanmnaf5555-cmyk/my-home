@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "users": {
+      "title": "User",
+      "description": "User registration and profile data",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the user" },
+        "email": { "type": "string", "description": "User's email address" },
+        "location": { "type": "string", "description": "User's city or location" },
+        "controlType": { "type": "string", "enum": ["house", "room", "other"], "description": "Type of unit to control" },
+        "controllerIp": { "type": "string", "description": "IP address of the smart controller (e.g., ESP32)" },
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of account creation" }
+      },
+      "required": ["name", "email", "location", "controlType", "uid", "createdAt"]
+    },
+    "verification_codes": {
+      "title": "Verification codes",
+      "description": "Transient codes for email verification",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "code": { "type": "string" },
+        "expires": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "code", "expires"]
+    },
+    "energy_usage": {
+      "title": "Energy Usage Record",
+      "description": "Store electricity consumption over time",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "amps": { "type": "number" },
+        "period": { "type": "string", "enum": ["minute", "hour", "day", "week", "month"] },
+        "userId": { "type": "string" }
+      },
+      "required": ["timestamp", "amps", "period", "userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "users",
+      "description": "Individual user profile documents"
+    },
+    "/verification_codes/{email}": {
+      "schema": "verification_codes",
+      "description": "Email verification codes"
+    },
+    "/energy_usage/{recordId}": {
+      "schema": "energy_usage",
+      "description": "Historical energy consumption records"
+    }
+  }
+}

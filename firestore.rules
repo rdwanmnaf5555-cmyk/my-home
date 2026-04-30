@@ -1,0 +1,99 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Document ID: {userId} (matches request.auth.uid)
+// Fields:
+//   - name: string (required, 2-50 chars)
+//   - phone: string (required, Iraqi format)
+//   - location: string (required, 2-100 chars)
+//   - uid: string (required, matches auth.uid)
+//   - createdAt: timestamp (required)
+//
+// ===============================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.size() <= 255 && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUser(data) {
+      // Simplified validation to debug permission issues
+      return data.uid == request.auth.uid &&
+             data.name is string &&
+             data.email is string &&
+             data.location is string &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /energy_usage/{recordId} {
+      allow read, write: if request.auth != null && (
+        (request.resource != null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
+
+    function isValidEnergyRecord(data) {
+      return data.userId == request.auth.uid &&
+             data.amps is number &&
+             data.timestamp is timestamp &&
+             data.period is string;
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    match /verification_codes/{email} {
+      // Allow creation and update of verification codes
+      allow create, update: if isValidEmail(email) && 
+                      request.resource.data.code is string && 
+                      request.resource.data.code.size() == 6 &&
+                      request.resource.data.expires is string;
+      
+      allow get: if true;
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

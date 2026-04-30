@@ -1,0 +1,6 @@
+{
+  "name": "My Home",
+  "description": "A high-performance smart home dashboard for monitoring ESP32 sensors and controlling lights with real-time ampere alerts.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": []
+}
